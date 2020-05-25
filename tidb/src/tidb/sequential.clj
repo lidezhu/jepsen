@@ -58,7 +58,7 @@
         (doseq [t (table-names table-count)]
           (c/execute! conn [(str "create table if not exists " t
                                  " (tkey varchar(255) primary key)")])
-          (c/execute! conn [(str "alter table " t " set tiflash replica 2")]
+          (c/execute! conn [(str "alter table " t " set tiflash replica 2")])
           (info "Created table" t))
         (Thread/sleep 10000))))
 
