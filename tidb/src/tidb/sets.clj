@@ -17,7 +17,9 @@
     (c/with-conn-failure-retry conn
       (c/execute! conn ["create table if not exists sets
                         (id     int not null primary key auto_increment,
-                        value  bigint not null)"])))
+                        value  bigint not null)"])
+      (c/execute! conn ["alter table sets set tiflash replica 2"])
+      (Thread/sleep 10000)))
 
   (invoke! [this test op]
     (c/with-error-handling op
@@ -46,7 +48,9 @@
     (c/with-conn-failure-retry conn
       (c/execute! conn ["create table if not exists sets
                         (id     int not null primary key,
-                        value   text)"])))
+                        value   text)"])
+      (c/execute! conn ["alter table sets set tiflash replica 2"])
+      (Thread/sleep 10000)))
 
   (invoke! [this test op]
     (c/with-txn op [c conn {:isolation (get test :isolation :repeatable-read)}]

@@ -34,6 +34,7 @@
                           (id     int not null primary key,
                           balance bigint not null)"])
         (c/execute! conn ["alter table accounts set tiflash replica 2"])
+        (Thread/sleep 10000)
         (doseq [a (:accounts test)]
           (try
             (with-txn-retries conn
@@ -109,7 +110,7 @@
               (c/execute! conn [(str "create table if not exists accounts" a
                                      "(id     int not null primary key,"
                                      "balance bigint not null)")])
-              (c/execute! conn [(str "alter table accounts" a " set tiflash replica 1")])
+              (c/execute! conn [(str "alter table accounts" a " set tiflash replica 2")])
               (try
                 (info "Populating account" a)
                 (c/insert! conn (str "accounts" a)
@@ -119,7 +120,7 @@
                                        0)})
                 (catch java.sql.SQLIntegrityConstraintViolationException e
                   nil)))
-	(Thread/sleep 5000))))))
+	         (Thread/sleep 10000))))))
 
   (invoke! [this test op]
       (try

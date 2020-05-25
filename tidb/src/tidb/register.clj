@@ -38,6 +38,8 @@
                         (id   int primary key,
                          sk   int,
                          val  int)"])
+      (c/execute! conn ["alter table test set tiflash replica 2"])
+      (Thread/sleep 10000)
       (when (:use-index test)
         (c/create-index! conn ["create index test_sk_val on test (sk, val)"]))))
 

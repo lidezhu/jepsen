@@ -45,6 +45,8 @@
                         (pk  int not null primary key,
                          sk  int not null,
                          val int)"])
+      (c/execute! conn ["alter table cycle set tiflash replica 2"])
+      (Thread/sleep 10000)
       (when (:use-index test)
         (c/create-index! conn ["create index cycle_sk_val on cycle (sk, val)"]))))
 
