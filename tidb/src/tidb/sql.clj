@@ -18,7 +18,7 @@
   [node]
   {:classname       "org.mariadb.jdbc.Driver"
    :subprotocol     "mariadb"
-   :subname         (str "//" (name node) ":4000/test")
+   :subname         (str "//" (name node) ":4100/test")
    :user            "root"
    :password        ""
    :connectTimeout  connect-timeout
@@ -31,6 +31,7 @@
 
   Returns conn."
   [conn test]
+  (j/execute! conn ["set @@tidb_isolation_read_engines = 'tiflash'"])
   (when-not (= :default (:auto-retry test))
     (info :setting-auto-retry (:auto-retry test))
     (j/execute! conn ["set @@tidb_disable_txn_auto_retry = ?"

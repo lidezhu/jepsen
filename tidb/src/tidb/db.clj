@@ -485,3 +485,10 @@
        kv-stdout
        pd-log-file
        pd-stdout])))
+
+(defn static-db
+  "Static TiDB"
+  []
+  (reify db/DB
+    (setup! [_ test node])
+    (teardown! [_ test node])))

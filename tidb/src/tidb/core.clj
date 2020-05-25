@@ -323,7 +323,7 @@
            opts
            (dissoc workload :final-generator)
            {:name       name
-            :db         (db/db)
+            :db         (db/static-db)
             :client     (:client workload)
             :nemesis    (:nemesis nemesis)
             :generator  gen
