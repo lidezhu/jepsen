@@ -18,7 +18,7 @@
       (c/execute! conn ["create table if not exists sets
                         (id     int not null primary key auto_increment,
                         value  bigint not null)"])
-      (c/execute! conn ["alter table sets set tiflash replica 2"])
+      (c/execute! conn ["alter table sets set tiflash replica 1"])
       (Thread/sleep 10000)))
 
   (invoke! [this test op]
@@ -56,7 +56,8 @@
     (c/with-txn op [c conn {:isolation (get test :isolation :repeatable-read)}]
       (case (:f op)
         :add  (let [e (:value op)]
-                (if-let [v (-> (c/query c [(str "set @@session.tidb_isolation_read_engines='tikv';select (value) from sets"
+                (c/execute! c ["set @@session.tidb_isolation_read_engines='tikv';"])
+                (if-let [v (-> (c/query c [(str "select (value) from sets"
                                                    " where id = 0 "
                                                    (:read-lock test))])
                                first
