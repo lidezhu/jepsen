@@ -65,9 +65,10 @@
                   (c/execute! c ["update sets set value = ? where id = 0"
                                     (str v "," e)])
                   (c/insert! c :sets {:id 0, :value (str e)}))
+                (c/execute! c ["set @@session.tidb_isolation_read_engines='tiflash';"])
                 (assoc op :type :ok))
 
-        :read (let [v (-> (c/query c ["set @@session.tidb_isolation_read_engines='tiflash';select (value) from sets where id = 0"])
+        :read (let [v (-> (c/query c ["select (value) from sets where id = 0"])
                           first
                           :value)
                     v (when v
