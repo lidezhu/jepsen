@@ -56,7 +56,7 @@
     (c/with-txn op [c conn {:isolation (get test :isolation :repeatable-read)}]
       (case (:f op)
         :add  (let [e (:value op)]
-                (if-let [v (-> (c/query c [(str "select (value) from sets"
+                (if-let [v (-> (c/query c [(str "set @@session.tidb_isolation_read_engines='tikv';select (value) from sets"
                                                    " where id = 0 "
                                                    (:read-lock test))])
                                first
@@ -66,7 +66,7 @@
                   (c/insert! c :sets {:id 0, :value (str e)}))
                 (assoc op :type :ok))
 
-        :read (let [v (-> (c/query c ["select (value) from sets where id = 0"])
+        :read (let [v (-> (c/query c ["set @@session.tidb_isolation_read_engines='tiflash';select (value) from sets where id = 0"])
                           first
                           :value)
                     v (when v
