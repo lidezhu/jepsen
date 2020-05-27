@@ -56,7 +56,7 @@
     (c/with-txn op [c conn {:isolation (get test :isolation :repeatable-read)}]
       (case (:f op)
         :add  (let [e (:value op)]
-                (c/execute! c ["set @@session.tidb_isolation_read_engines='tikv';"])
+                (c/execute! c ["set @@session.tidb_isolation_read_engines='tiflash';"])
                 (if-let [v (-> (c/query c [(str "select (value) from sets as t_"
                 																																			e
                                                    " where id = 0 "
