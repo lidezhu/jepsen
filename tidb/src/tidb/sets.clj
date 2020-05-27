@@ -49,7 +49,7 @@
       (c/execute! conn ["create table if not exists sets
                         (id     int not null primary key,
                         value   text)"])
-      (c/execute! conn ["alter table sets set tiflash replica 2"])
+      (c/execute! conn ["alter table sets set tiflash replica 1"])
       (Thread/sleep 10000)))
 
   (invoke! [this test op]
