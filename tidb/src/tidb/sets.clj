@@ -58,7 +58,11 @@
         :add  (let [e (:value op)]
                 (c/execute! c ["set @@session.tidb_isolation_read_engines='tikv';"])
                 (if-let [v (-> (c/query c [(str "select (value) from sets"
-                                                   " where id = 0 "
+                                                   " where id = 0 and "
+                                                   e
+                                                   " = "
+                                                   e
+                                                   " "
                                                    (:read-lock test))])
                                first
                                :value)]
