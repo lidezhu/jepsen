@@ -293,6 +293,8 @@
                   " " (name (:workload opts))
                   (when (:tiflash-replicas opts)
                     (str " tiflash-replicas " (:tiflash-replicas opts)))
+                  (when (:tidb-isolation-read-engines opts)
+                    (str " tidb-isolation-read-engines " (:tidb-isolation-read-engines opts)))
                   (when (:auto-retry opts)
                     " auto-retry")
                   (when (not= 0 (:auto-retry-limit opts))
@@ -447,7 +449,7 @@
     :validate [(fn [x] (or (= :default x) (not (neg? x))))
                "Must not be negative"]]
 
-   [nil "--tidb-isolation-read-engines" "Set session variable tidb_isolation_read_engines."
+   [nil "--tidb-isolation-read-engines ENGINE" "Set session variable tidb_isolation_read_engines."
     :default "tikv,tiflash"
     :validate [#{"tikv,tiflash" "tikv" "tiflash"} "Must be 'tikv,tiflash', 'tikv' or 'tiflash'"]]
 
