@@ -447,6 +447,10 @@
     :validate [(fn [x] (or (= :default x) (not (neg? x))))
                "Must not be negative"]]
 
+   [nil "--tidb-isolation-read-engines" "Set session variable tidb_isolation_read_engines."
+    :default "tikv,tiflash"
+    :validate [#{"tikv,tiflash" "tikv" "tiflash"} "Must be 'tikv,tiflash', 'tikv' or 'tiflash'"]]
+
    [nil "--predicate-read" "If present, try to read using a query over a secondary key, rather than by primary key. Implied by --use-index."
     :default false]
 
