@@ -145,9 +145,11 @@
     :kill-pd
     :kill-kv
     :kill-db
+    :kill-tiflash
     :pause-pd
     :pause-kv
     :pause-db
+    :pause-tiflash
     :schedules
     :shuffle-leader
     :shuffle-region

@@ -45,10 +45,12 @@
     (j/execute! conn ["set @@tidb_retry_limit = ?"
                       (:auto-retry-limit test 10)]))
 
-  (when-not (= :default (:tidb-isolation-read-engines test))
+  (when (:tidb-isolation-read-engines test)
     (info :setting-tidb-isolation-read-engines (:tidb-isolation-read-engines test))
     (j/execute! conn ["set @@tidb_isolation_read_engines = ?"
                      (:tidb-isolation-read-engines test)]))
+  ; TODO: remove this line
+  (j/execute! conn ["set @@tidb_isolation_read_engines = 'tiflash'"])
 
   (let [mode (if (= (:txn-mode test) "mixed")
                (if (= 0 (rand-int 2)) "pessimistic" "optimistic")
