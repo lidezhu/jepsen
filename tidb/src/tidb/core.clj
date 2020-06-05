@@ -145,11 +145,11 @@
     :kill-pd
     :kill-kv
     :kill-db
-    :kill-tiflash
+    :kill-flash
     :pause-pd
     :pause-kv
     :pause-db
-    :pause-tiflash
+    :pause-flash
     :schedules
     :shuffle-leader
     :shuffle-region
@@ -161,7 +161,7 @@
 
 (def process-faults
   "Faults affecting individual processes"
-  [:kill-pd :kill-kv :kill-db :pause-pd :pause-kv :pause-db])
+  [:kill-pd :kill-kv :kill-db :kill-flash :pause-pd :pause-kv :pause-db :pause-flash])
 
 (def network-faults
   "Faults affecting the network"
