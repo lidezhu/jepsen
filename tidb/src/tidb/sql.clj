@@ -50,7 +50,7 @@
     (j/execute! conn ["set @@tidb_isolation_read_engines = ?"
                      (:tidb-isolation-read-engines test)]))
   ; TODO: remove this line
-  (j/execute! conn ["set @@tidb_isolation_read_engines = 'tiflash'"])
+  ; (j/execute! conn ["set @@tidb_isolation_read_engines = 'tiflash'"])
 
   (let [mode (if (= (:txn-mode test) "mixed")
                (if (= 0 (rand-int 2)) "pessimistic" "optimistic")
