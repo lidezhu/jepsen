@@ -51,7 +51,9 @@
     (with-txn op [c conn {:isolation (get test :isolation :repeatable-read)}]
       (try
         (case (:f op)
-          :read (->> (c/query c [(str "select * from accounts")])
+          :read (->> (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
+                         (c/query c [(str "select * from accounts")])
+                         (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")]))
                      (map (juxt :id :balance))
                      (into (sorted-map))
                      (assoc op :type :ok, :value))
