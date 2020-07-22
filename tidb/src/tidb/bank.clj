@@ -52,8 +52,7 @@
       (try
         (case (:f op)
           :read (->> (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
-                         (c/query c [(str "select * from accounts")])
-                         (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")]))
+                         (c/query c [(str "select * from accounts")]))
                      (map (juxt :id :balance))
                      (into (sorted-map))
                      (assoc op :type :ok, :value))
@@ -61,16 +60,18 @@
           :transfer
           (let [{:keys [from to amount]} (:value op)
                 b1 (-> c
-                       (c/query [(str "select * from accounts where id = ? "
-                                      (:read-lock test)) from]
-                                {:row-fn :balance})
+                       (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")]))
+                           (c/query [(str "select * from accounts where id = ? "
+                                          (:read-lock test)) from]
+                                    {:row-fn :balance}))
                        first
                        (- amount))
                 b2 (-> c
-                       (c/query [(str "select * from accounts where id = ? "
-                                      (:read-lock test))
-                                 to]
-                                {:row-fn :balance})
+                       (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")]))
+                           (c/query [(str "select * from accounts where id = ? "
+                                          (:read-lock test))
+                                     to]
+                                    {:row-fn :balance})
                        first
                        (+ amount))]
             (cond (neg? b1)
@@ -79,10 +80,12 @@
                   (assoc op :type :fail, :value [:negative to b2])
                   true
                   (if (:update-in-place test)
-                    (do (c/execute! c ["update accounts set balance = balance - ? where id = ?" amount from])
+                    (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                        (c/execute! c ["update accounts set balance = balance - ? where id = ?" amount from])
                         (c/execute! c ["update accounts set balance = balance + ? where id = ?" amount to])
                         (assoc op :type :ok :value (transfer_value (txn_ts c) from to b1 b2 amount)))
-                    (do (c/update! c :accounts {:balance b1} ["id = ?" from])
+                    (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                        (c/update! c :accounts {:balance b1} ["id = ?" from])
                         (c/update! c :accounts {:balance b2} ["id = ?" to])
                         (assoc op :type :ok :value (transfer_value (txn_ts c) from to b1 b2 amount))))))))))
 
