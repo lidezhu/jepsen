@@ -21,7 +21,7 @@
 (defn read
   "Reads the current value of a key."
   [conn test k]
-  (:val (first (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
+  (:val (first (do (c/execute! conn [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
                  (c/query conn [(str "select (val) from test where "
                                    (if (:use-index test) "sk" "id") " = ? "
                                    (:read-lock test))
