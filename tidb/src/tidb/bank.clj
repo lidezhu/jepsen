@@ -151,15 +151,15 @@
                   from (str "accounts" from)
                   to   (str "accounts" to)
                   b1 (-> c
-                         (fn [c] (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                         ((fn [c] (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
                                   (c/query c [(str "select balance from " from " " (:read-lock test))]
-                                             {:row-fn :balance})))
+                                             {:row-fn :balance}))) ,,,)
                         first
                         (- amount))
                   b2 (-> c
-                         (fn [c] (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                         ((fn [c] (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
                                    (c/query c [(str "select balance from " to " " (:read-lock test))]
-                                              {:row-fn :balance})))
+                                              {:row-fn :balance}))) ,,,)
                         first
                         (+ amount))]
               (cond (neg? b1)
@@ -168,10 +168,12 @@
                     (assoc op :type :fail, :error [:negative to b2])
                     true
                     (if (:update-in-place test)
-                      (do (c/execute! c [(str "update " from " set balance = balance - ? where id = 0") amount])
+                      (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                          (c/execute! c [(str "update " from " set balance = balance - ? where id = 0") amount])
                           (c/execute! c [(str "update " to " set balance = balance + ? where id = 0") amount])
                           (assoc op :type :ok :value (transfer_value (txn_ts c)  from to b1 b2 amount)))
-                      (do (c/update! c from {:balance b1} ["id = 0"])
+                      (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                          (c/update! c from {:balance b1} ["id = 0"])
                           (c/update! c to {:balance b2} ["id = 0"])
                           (assoc op :type :ok :value (transfer_value (txn_ts c)  from to b1 b2 amount))))))))))
 
