@@ -29,10 +29,12 @@
     (c/with-error-handling op
       (c/with-txn-aborts op
         (case (:f op)
-          :add  (do (c/insert! conn :sets (select-keys op [:value]))
+          :add  (do (c/execute! conn [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                    (c/insert! conn :sets (select-keys op [:value]))
                     (assoc op :type :ok))
 
-          :read (->> (c/query conn ["select * from sets"])
+          :read (->> (do (c/execute! conn [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
+                         (c/query conn ["select * from sets"]))
                      (mapv :value)
                      (assoc op :type :ok, :value))))))
 
@@ -63,9 +65,10 @@
     (c/with-txn op [c conn {:isolation (get test :isolation :repeatable-read)}]
       (case (:f op)
         :add  (let [e (:value op)]
-                (if-let [v (-> (c/query c [(str "select (value) from sets"
+                (if-let [v (-> (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                                 (c/query c [(str "select (value) from sets"
                                                    " where id = 0 "
-                                                   (:read-lock test))])
+                                                   (:read-lock test))]))
                                first
                                :value)]
                   (c/execute! c ["update sets set value = ? where id = 0"
@@ -73,7 +76,8 @@
                   (c/insert! c :sets {:id 0, :value (str e)}))
                 (assoc op :type :ok))
 
-        :read (let [v (-> (c/query c ["select (value) from sets where id = 0"])
+        :read (let [v (-> (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
+                            (c/query c ["select (value) from sets where id = 0"]))
                           first
                           :value)
                     v (when v

@@ -136,10 +136,11 @@
           :read
           (with-txn op [c conn {:isolation :repeatable-read}]
             (->> (:accounts test)
-                (map (fn [x]
-                        [x (->> (c/query c [(str "select balance from accounts"
-                                                x)]
-                                         {:row-fn :balance})
+                 (map (fn [x]
+                       [x (->> (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
+                                  (c/query c [(str "select balance from accounts"
+                                                     x)]
+                                             {:row-fn :balance}))
                                 first)]))
                 (into (sorted-map))
                 (assoc op :type :ok, :value)))
@@ -150,16 +151,15 @@
                   from (str "accounts" from)
                   to   (str "accounts" to)
                   b1 (-> c
-                        (c/query
-                          [(str "select balance from " from
-                                " " (:read-lock test))]
-                          {:row-fn :balance})
+                         (fn [c] (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                                  (c/query c [(str "select balance from " from " " (:read-lock test))]
+                                             {:row-fn :balance})))
                         first
                         (- amount))
                   b2 (-> c
-                        (c/query [(str "select balance from " to
-                                        " " (:read-lock test))]
-                                  {:row-fn :balance})
+                         (fn [c] (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                                   (c/query c [(str "select balance from " to " " (:read-lock test))]
+                                              {:row-fn :balance})))
                         first
                         (+ amount))]
               (cond (neg? b1)

@@ -21,10 +21,11 @@
 (defn read
   "Reads the current value of a key."
   [conn test k]
-  (:val (first (c/query conn [(str "select (val) from test where "
+  (:val (first (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
+                 (c/query conn [(str "select (val) from test where "
                                    (if (:use-index test) "sk" "id") " = ? "
                                    (:read-lock test))
-                              k]))))
+                              k])))))
 
 (defrecord AtomicClient [conn tbl-created?]
   client/Client
@@ -56,7 +57,8 @@
                            :type  :ok
                            :value (independent/tuple id (read c test id)))
 
-              :write (do (c/execute! c [(str "insert into test (id, sk, val) "
+              :write (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                       (c/execute! c [(str "insert into test (id, sk, val) "
                                              "values (?, ?, ?) "
                                              "on duplicate key update "
                                              "val = ?")
@@ -66,7 +68,8 @@
               :cas (let [[expected-val new-val] val'
                          v   (read c test id)]
                      (if (= v expected-val)
-                       (do (c/update! c :test {:val new-val} ["id = ?" id])
+                       (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                           (c/update! c :test {:val new-val} ["id = ?" id])
                            (assoc op :type :ok))
                        (assoc op :type :fail, :error :precondition-failed)))))))))
 

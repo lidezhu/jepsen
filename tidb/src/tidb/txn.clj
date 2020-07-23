@@ -22,30 +22,33 @@
   (let [table (table-for table-count k)]
     [f k (case f
            :r (-> conn
-                  (c/query [(str "select val from " table " where "
-                                 (if (or (:use-index test)
+                  (fn [c] (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
+                         (c/query c [(str "select val from " table " where "
+                                   (if (or (:use-index test)
                                          (:predicate-read test))
                                    "sk"
                                    "id")
-                                 " = ? "
-                                 (:read-lock test))
-                            k])
+                                   " = ? "
+                                   (:read-lock test))
+                              k])))
                   first
                   :val)
 
-           :w (do (c/execute! conn [(str "insert into " table
+           :w (do (c/execute! conn [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                (c/execute! conn [(str "insert into " table
                                          " (id, sk, val) values (?, ?, ?)"
                                          " on duplicate key update val = ?")
                                     k k v v])
-                  v)
+                v)
 
            :append
-           (let [r (c/execute!
-                     conn
-                     [(str "insert into " table
+           (let [r (do (c/execute! conn [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                     (c/execute!
+                                 conn
+                                 [(str "insert into " table
                            " (id, sk, val) values (?, ?, ?)"
                            " on duplicate key update val = CONCAT(val, ',', ?)")
-                      k k (str v) (str v)])]
+                      k k (str v) (str v)]))]
              v))]))
 
 (defrecord Client [conn val-type table-count tbl-created?]

@@ -21,9 +21,10 @@
   "Read a specific key's value from the table. Missing values are represented
   as -1."
   [c test k]
-  (-> (c/query c [(str "select (val) from cycle where "
+  (-> (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
+        (c/query c [(str "select (val) from cycle where "
                        (if (:use-index test) "pk" "sk") " = ?")
-                  k])
+                  k]))
       first
       (:val -1)))
 
@@ -63,7 +64,8 @@
         :inc (let [k (:value op)]
                (if (:update-in-place test)
                  ; Update directly
-                 (do (when (= [0] (c/execute!
+                 (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                   (when (= [0] (c/execute!
                                     c [(str "update cycle set val = val + 1"
                                             " where pk = ?") k]))
                        ; That failed; insert
@@ -75,10 +77,12 @@
                  ; Update via separate r/w
                  (let [v (read-key c test k)]
                    (if (= -1 v)
-                     (c/insert! c "cycle" {:pk k, :sk k, :val 0})
-                     (c/update! c "cycle" {:val (inc v)},
+                     (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                         (c/insert! c "cycle" {:pk k, :sk k, :val 0}))
+                     (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                         (c/update! c "cycle" {:val (inc v)},
                                 [(str (if (:use-index test) "sk" "pk") " = ?")
-                                 k]))
+                                 k])))
                    ; The monotonic value constraint isn't actually enough to
                    ; capture all the ordering dependencies here: an increment
                    ; from x->y must fall after every read of x, and before
