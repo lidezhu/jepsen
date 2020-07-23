@@ -22,7 +22,7 @@
   (let [table (table-for table-count k)]
     [f k (case f
            :r (-> conn
-                  (fn [c] (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
+                  ((fn [c] (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tiflash'")])
                          (c/query c [(str "select val from " table " where "
                                    (if (or (:use-index test)
                                          (:predicate-read test))
@@ -30,7 +30,7 @@
                                    "id")
                                    " = ? "
                                    (:read-lock test))
-                              k])))
+                              k]))) ,,,)
                   first
                   :val)
 
