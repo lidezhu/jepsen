@@ -60,17 +60,17 @@
           :transfer
           (let [{:keys [from to amount]} (:value op)
                 b1 (-> c
-                       (fn [c] (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                       ((fn [c] (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
                                (c/query [(str "select * from accounts where id = ? "
                                             (:read-lock test)) from]
-                                        {:row-fn :balance})))
+                                        {:row-fn :balance}))) ,,,)
                        first
                        (- amount))
                 b2 (-> c
-                       (fn [c]  (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
+                       ((fn [c]  (do (c/execute! c [(str "set @@session.tidb_isolation_read_engines='tikv'")])
                                 (c/query [(str "select * from accounts where id = ? "
                                              (:read-lock test))  to]
-                                         {:row-fn :balance})))
+                                         {:row-fn :balance}))) ,,,)
                        first
                        (+ amount))]
             (cond (neg? b1)
